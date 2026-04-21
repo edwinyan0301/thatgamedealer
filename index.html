@@ -17,7 +17,6 @@
         .game-card { transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); }
         .game-card:active { scale: 0.95; }
         
-        /* 恢复的 3A 大作背景墙 CSS */
         .steam-bg-wall { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; filter: blur(3px); }
         .steam-bg-wall img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; opacity: 0.15; }
         .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 100%); }
@@ -223,12 +222,14 @@
             const userCategories = ref(['手机模拟器', 'Switch 专区', 'PC 移植', '精品精品']);
             const games = ref([]);
             
-            const adminPassword = ref(localStorage.getItem('admin_pass_v12') || '8888');
+            // 默认密码，会被云端数据覆盖
+            const adminPassword = ref('8888');
 
             const editItem = ref({ id: '', title: '', category: '手机模拟器', price: 'RM 3', banner: '', youtubeId: '', screenshots: [], specs: { cpu: '', fps: '', device: '' } });
             const screenshotInput = ref(''), editingIndex = ref(-1), newCatName = ref('');
 
             onMounted(() => {
+                // 监听游戏数据
                 db.ref('games').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
@@ -240,9 +241,16 @@
                     }
                 });
                 
+                // 监听分类数据
                 db.ref('categories').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if(data) userCategories.value = data;
+                });
+
+                // 新增：监听云端密码，实现“改一处全改”
+                db.ref('adminPass').on('value', (snapshot) => {
+                    const cloudPass = snapshot.val();
+                    if (cloudPass) adminPassword.value = cloudPass;
                 });
             });
 
@@ -261,13 +269,15 @@
             };
 
             const handleLogin = () => { if (passInput.value === adminPassword.value) { isAdmin.value = true; showLogin.value = false; passInput.value = ''; } else { alert('密码错误'); }};
+            
+            // 修改密码：同步到云端
             const updatePassword = () => { 
                 if(newPass.value) { 
-                    adminPassword.value = newPass.value; 
-                    localStorage.setItem('admin_pass_v12', newPass.value); 
-                    alert('密码已更新！请记住新密码。'); 
-                    showSecurity.value = false; 
-                    newPass.value = '';
+                    db.ref('adminPass').set(newPass.value).then(() => {
+                        alert('密码已同步至云端！所有设备将立即更新。'); 
+                        showSecurity.value = false; 
+                        newPass.value = '';
+                    }).catch(e => alert('同步失败：' + e.message));
                 } 
             };
             
