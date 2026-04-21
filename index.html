@@ -17,9 +17,15 @@
         .game-card { transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); }
         .game-card:active { scale: 0.95; }
         
-        .steam-bg-wall { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; filter: blur(3px); }
-        .steam-bg-wall img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; opacity: 0.15; }
-        .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 100%); }
+        /* 优化背景墙 */
+        .steam-bg-wall { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; display: grid; grid-template-columns: repeat(2, 1fr); md:grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; filter: blur(2px); }
+        .steam-bg-wall img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; opacity: 0.2; }
+        .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,1) 100%); }
+        
+        /* 修复详情页滚动 */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,107,0,0.3); border-radius: 10px; }
+        
         [v-cloak] { display: none; }
     </style>
 </head>
@@ -48,7 +54,7 @@
     </nav>
 
     <div class="steam-bg-wall">
-        <img v-for="i in 8" :key="i" :src="'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+(1091500+i)+'/capsule_616x353.jpg'">
+        <img v-for="id in bgAppIds" :key="id" :src="'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/'+id+'/capsule_616x353.jpg'">
     </div>
     <div class="bg-overlay"></div>
 
@@ -85,30 +91,50 @@
 
     <div v-if="activeGame" class="fixed inset-0 z-[150] flex items-end md:items-center justify-center p-0 md:p-6 backdrop-blur-md">
         <div class="absolute inset-0 bg-black/95" @click="activeGame = null"></div>
-        <div class="relative w-full max-w-6xl bg-[#0d0d0d] rounded-t-[2rem] md:rounded-[3rem] border-t md:border border-white/10 flex flex-col md:flex-row h-[92vh] md:h-[90vh] overflow-hidden">
-            <button @click="activeGame = null" class="absolute top-4 right-6 z-[200] text-white/30 text-xl">✕</button>
+        <div class="relative w-full max-w-6xl bg-[#0d0d0d] rounded-t-[2rem] md:rounded-[3rem] border-t md:border border-white/10 flex flex-col md:flex-row h-[92vh] md:h-[85vh] overflow-hidden">
+            <button @click="activeGame = null" class="absolute top-4 right-6 z-[200] text-white/30 text-2xl p-2">✕</button>
             
-            <div class="w-full md:w-3/5 h-1/3 md:h-full overflow-y-auto p-4 md:p-8 bg-black/40 custom-scrollbar">
-                <div class="aspect-video rounded-xl overflow-hidden mb-4 border border-white/5">
-                    <iframe v-if="activeGame.youtubeId && !activeGame.youtubeId.includes('.mp4')" :src="'https://www.youtube.com/embed/' + activeGame.youtubeId" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
-                    <video v-else-if="activeGame.youtubeId" :src="activeGame.youtubeId" controls autoplay muted loop class="w-full h-full object-cover"></video>
+            <div class="w-full md:w-3/5 h-[45%] md:h-full overflow-y-auto p-4 md:p-8 bg-black/40 custom-scrollbar space-y-4">
+                <div class="aspect-video rounded-xl overflow-hidden border border-white/5 bg-black">
+                    <iframe v-if="getYoutubeEmbedUrl(activeGame.youtubeId)" 
+                            :src="getYoutubeEmbedUrl(activeGame.youtubeId)" 
+                            class="w-full h-full" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
+                    <video v-else-if="activeGame.youtubeId" :src="activeGame.youtubeId" controls class="w-full h-full object-contain"></video>
+                    <div v-else class="w-full h-full flex items-center justify-center text-white/20 text-xs italic">No Preview Video</div>
                 </div>
-                <div class="grid grid-cols-1 gap-4"><img v-for="(img, imgIdx) in activeGame.screenshots" :key="imgIdx" :src="img" class="w-full rounded-xl border border-white/5"></div>
+                <div class="grid grid-cols-1 gap-4">
+                    <img v-for="(img, imgIdx) in activeGame.screenshots" :key="imgIdx" :src="img" class="w-full rounded-xl border border-white/5 shadow-2xl" loading="lazy">
+                </div>
             </div>
 
-            <div class="w-full md:w-2/5 h-2/3 md:h-full flex flex-col p-6 md:p-10">
+            <div class="w-full md:w-2/5 h-[55%] md:h-full flex flex-col p-6 md:p-10 border-t md:border-t-0 md:border-l border-white/5">
                 <div class="flex-1 overflow-y-auto no-scrollbar">
                     <span class="text-[#FF6B00] text-[9px] font-black uppercase mb-2 inline-block tracking-[0.3em]">{{ activeGame.category }}</span>
                     <h2 class="text-2xl md:text-5xl font-black italic mb-6 leading-none uppercase">{{ activeGame.title }}</h2>
-                    <div class="bg-white/5 rounded-xl p-4 text-xs leading-relaxed text-white/70 mb-6 whitespace-pre-line border border-white/5">{{ activeGame.specs.cpu }}</div>
+                    
+                    <div class="bg-white/5 rounded-xl p-4 text-xs leading-relaxed text-white/70 mb-6 whitespace-pre-line border border-white/5">
+                        {{ activeGame.specs.cpu }}
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="bg-white/5 rounded-xl p-4 border border-white/5"><span class="text-[9px] text-white/20 block font-black uppercase">Perfomance</span><span class="text-green-400 font-black italic text-xl">{{ activeGame.specs.fps }}</span></div>
-                        <div class="bg-white/5 rounded-xl p-4 border border-white/5"><span class="text-[9px] text-white/20 block font-black uppercase">Tested On</span><span class="font-bold text-[11px] block mt-1 uppercase">{{ activeGame.specs.device }}</span></div>
+                        <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                            <span class="text-[9px] text-white/20 block font-black uppercase">{{ lang === 'zh' ? '性能表现' : 'Performance' }}</span>
+                            <span class="text-green-400 font-black italic text-xl">{{ activeGame.specs.fps }}</span>
+                        </div>
+                        <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                            <span class="text-[9px] text-white/20 block font-black uppercase">{{ lang === 'zh' ? '实测设备' : 'Tested On' }}</span>
+                            <span class="font-bold text-[11px] block mt-1 uppercase">{{ activeGame.specs.device }}</span>
+                        </div>
                     </div>
                 </div>
+
                 <div class="pt-6 border-t border-white/5">
                     <div class="flex justify-between items-end mb-4 font-black italic text-[#FF6B00]">
-                        <span class="text-[10px] text-white/20 uppercase tracking-widest">Price</span>
+                        <span class="text-[10px] text-white/20 uppercase tracking-widest">{{ lang === 'zh' ? '单价' : 'Price' }}</span>
                         <span class="text-4xl md:text-6xl tracking-tighter">{{ activeGame.price }}</span>
                     </div>
                     <a href="https://t.me/thatgamedealer" target="_blank" class="block w-full bg-[#FF6B00] text-black text-center py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-[0_10px_20px_rgba(255,107,0,0.2)]">
@@ -124,13 +150,13 @@
             <div class="flex justify-between items-center mb-12 border-b border-white/5 pb-8">
                 <h2 class="text-2xl font-black italic tracking-tighter">CONSOLE.</h2>
                 <div class="flex gap-4">
-                    <button @click="showSecurity = true" class="bg-blue-500/10 text-blue-400 px-4 py-2 rounded-xl text-[10px] font-bold border border-blue-500/20 uppercase">Password</button>
-                    <button @click="isAdmin = false" class="bg-white/5 px-6 py-2 rounded-xl text-[10px] font-bold border border-white/10 uppercase">Exit</button>
+                    <button @click="showSecurity = true" class="bg-blue-500/10 text-blue-400 px-4 py-2 rounded-xl text-[10px] font-bold border border-blue-500/20 uppercase">{{ lang === 'zh' ? '修改密码' : 'Password' }}</button>
+                    <button @click="isAdmin = false" class="bg-white/5 px-6 py-2 rounded-xl text-[10px] font-bold border border-white/10 uppercase">{{ lang === 'zh' ? '退出' : 'Exit' }}</button>
                 </div>
             </div>
 
             <div class="mb-12 p-8 bg-white/5 rounded-[2rem] border border-white/5">
-                <h3 class="text-[10px] font-black text-[#FF6B00] uppercase mb-6 tracking-widest">分类管理 (双击分类名删除)</h3>
+                <h3 class="text-[10px] font-black text-[#FF6B00] uppercase mb-6 tracking-widest">{{ lang === 'zh' ? '分类管理' : 'Categories' }} ({{ lang === 'zh' ? '双击删除' : 'DblClick to Delete' }})</h3>
                 <div class="flex flex-wrap gap-3 mb-6 italic">
                     <div v-for="(cat, idx) in userCategories" :key="cat" @dblclick="removeCategory(idx)" 
                          class="px-4 py-2 bg-white/10 rounded-lg text-xs font-bold cursor-help border border-white/5 hover:border-red-500/50 transition-colors">
@@ -138,36 +164,36 @@
                     </div>
                 </div>
                 <div class="flex max-w-md gap-2">
-                    <input v-model="newCatName" placeholder="新分类名称" class="flex-1 bg-black border border-white/10 p-3 rounded-xl text-xs outline-none">
-                    <button @click="addCategory" class="bg-white text-black px-6 rounded-xl font-black text-xs">添加</button>
+                    <input v-model="newCatName" :placeholder="lang === 'zh' ? '新分类名称' : 'New Category'" class="flex-1 bg-black border border-white/10 p-3 rounded-xl text-xs outline-none">
+                    <button @click="addCategory" class="bg-white text-black px-6 rounded-xl font-black text-xs">{{ lang === 'zh' ? '添加' : 'Add' }}</button>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 <div class="space-y-4 bg-white/5 p-6 rounded-[2rem] border border-white/5 h-fit">
-                    <h3 class="text-[10px] font-black text-white/20 uppercase mb-4 tracking-widest">内容录入</h3>
-                    <input v-model="editItem.title" placeholder="游戏名称" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
+                    <h3 class="text-[10px] font-black text-white/20 uppercase mb-4 tracking-widest">{{ lang === 'zh' ? '内容录入' : 'Game Editor' }}</h3>
+                    <input v-model="editItem.title" :placeholder="lang === 'zh' ? '游戏名称' : 'Game Title'" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
                     <div class="grid grid-cols-2 gap-4">
                         <select v-model="editItem.category" class="bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none appearance-none font-bold text-white">
                             <option v-for="c in userCategories" :key="c" :value="c">{{c}}</option>
                         </select>
-                        <input v-model="editItem.price" placeholder="价格 (如 RM 5)" class="bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none font-bold text-[#FF6B00]">
+                        <input v-model="editItem.price" placeholder="RM 5" class="bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none font-bold text-[#FF6B00]">
                     </div>
-                    <textarea v-model="editItem.specs.cpu" placeholder="系统要求/介绍" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm h-32 outline-none"></textarea>
+                    <textarea v-model="editItem.specs.cpu" :placeholder="lang === 'zh' ? '介绍内容' : 'Description'" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm h-32 outline-none"></textarea>
                     <div class="grid grid-cols-2 gap-4">
-                        <input v-model="editItem.specs.fps" placeholder="FPS (如 60FPS)" class="bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
-                        <input v-model="editItem.specs.device" placeholder="实测机型" class="bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
+                        <input v-model="editItem.specs.fps" placeholder="FPS (e.g. 60FPS)" class="bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
+                        <input v-model="editItem.specs.device" :placeholder="lang === 'zh' ? '测试机型' : 'Device'" class="bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
                     </div>
-                    <input v-model="editItem.banner" placeholder="封面图片链接" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
-                    <textarea v-model="screenshotInput" placeholder="详情图链接 (每行一个)" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm h-24 outline-none"></textarea>
-                    <input v-model="editItem.youtubeId" placeholder="Youtube ID 或视频直链" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
-                    <button @click="saveGame" class="w-full bg-[#FF6B00] text-black font-black py-4 rounded-xl shadow-lg hover:scale-[1.02] transition-transform">同步至云端</button>
+                    <input v-model="editItem.banner" :placeholder="lang === 'zh' ? '封面图片链接' : 'Banner URL'" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
+                    <textarea v-model="screenshotInput" :placeholder="lang === 'zh' ? '详情图链接 (每行一个)' : 'Screenshots (one per line)'" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm h-24 outline-none"></textarea>
+                    <input v-model="editItem.youtubeId" :placeholder="lang === 'zh' ? 'Youtube ID 或视频链接' : 'Youtube ID or Video URL'" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none">
+                    <button @click="saveGame" class="w-full bg-[#FF6B00] text-black font-black py-4 rounded-xl shadow-lg hover:scale-[1.02] transition-transform">{{ lang === 'zh' ? '同步至云端' : 'Sync to Cloud' }}</button>
                 </div>
                 
                 <div class="lg:col-span-2 space-y-4">
-                    <h3 class="text-[10px] font-black text-white/20 uppercase mb-4 tracking-widest">库存清单 ({{games.length}})</h3>
+                    <h3 class="text-[10px] font-black text-white/20 uppercase mb-4 tracking-widest">{{ lang === 'zh' ? '库存清单' : 'Inventory' }} ({{games.length}})</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div v-for="(game, i) in games" :key="game.id" class="glass-panel p-4 rounded-2xl flex items-center justify-between border border-white/5 hover:border-[#FF6B00]/30 transition-colors">
+                        <div v-for="(game, i) in games" :key="game.id" class="glass-panel p-4 rounded-2xl flex items-center justify-between border border-white/5">
                             <div class="flex items-center gap-3 overflow-hidden">
                                 <img :src="game.banner" class="w-12 h-12 object-cover rounded-lg flex-shrink-0">
                                 <div class="truncate"><p class="font-bold text-xs truncate w-32 uppercase italic">{{game.title}}</p><p class="text-[10px] text-[#FF6B00] font-black">{{game.price}}</p></div>
@@ -186,18 +212,18 @@
     <div v-if="showLogin" class="fixed inset-0 z-[400] bg-black/95 flex items-center justify-center backdrop-blur-xl p-6">
         <div class="w-full max-w-xs text-center">
             <h3 class="text-xl font-black italic mb-8 tracking-widest text-[#FF6B00]">VAULT.</h3>
-            <input v-model="passInput" type="password" placeholder="密码" @keyup.enter="handleLogin" class="w-full bg-transparent border-b border-white/20 text-center text-3xl font-black py-4 mb-8 focus:outline-none focus:border-[#FF6B00] tracking-widest text-white">
-            <button @click="handleLogin" class="w-full bg-[#FF6B00] text-black font-black py-4 rounded-xl text-[10px] uppercase tracking-widest">验证授权</button>
-            <button @click="showLogin = false" class="mt-8 text-white/20 text-[10px] block w-full uppercase tracking-tighter italic">Cancel / Back</button>
+            <input v-model="passInput" type="password" placeholder="PASSWORD" @keyup.enter="handleLogin" class="w-full bg-transparent border-b border-white/20 text-center text-3xl font-black py-4 mb-8 focus:outline-none focus:border-[#FF6B00] tracking-widest text-white">
+            <button @click="handleLogin" class="w-full bg-[#FF6B00] text-black font-black py-4 rounded-xl text-[10px] uppercase tracking-widest">{{ lang === 'zh' ? '验证授权' : 'Verify' }}</button>
+            <button @click="showLogin = false" class="mt-8 text-white/20 text-[10px] block w-full uppercase italic">Cancel</button>
         </div>
     </div>
 
     <div v-if="showSecurity" class="fixed inset-0 z-[500] bg-black/95 flex items-center justify-center backdrop-blur-xl p-6">
         <div class="w-full max-w-xs text-center bg-[#0d0d0d] p-8 rounded-[2rem] border border-white/10">
             <h3 class="text-[12px] font-black italic mb-6 tracking-widest text-blue-400 uppercase">Change Password</h3>
-            <input v-model="newPass" type="password" placeholder="输入新密码" @keyup.enter="updatePassword" class="w-full bg-transparent border-b border-white/20 text-center text-xl font-black py-3 mb-6 focus:outline-none focus:border-blue-400 tracking-widest text-white">
-            <button @click="updatePassword" class="w-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-black py-3 rounded-xl text-[10px] uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-colors">确认修改</button>
-            <button @click="showSecurity = false" class="mt-6 text-white/30 text-[10px] block w-full uppercase tracking-tighter italic hover:text-white">Cancel</button>
+            <input v-model="newPass" type="password" placeholder="New Password" @keyup.enter="updatePassword" class="w-full bg-transparent border-b border-white/20 text-center text-xl font-black py-3 mb-6 focus:outline-none focus:border-blue-400 tracking-widest text-white">
+            <button @click="updatePassword" class="w-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-black py-3 rounded-xl text-[10px] uppercase tracking-widest">{{ lang === 'zh' ? '确认修改' : 'Update' }}</button>
+            <button @click="showSecurity = false" class="mt-6 text-white/30 text-[10px] block w-full uppercase italic">Cancel</button>
         </div>
     </div>
 </div>
@@ -214,45 +240,54 @@
         setup() {
             const lang = ref(localStorage.getItem('dealer_lang_v12') || 'zh');
             const showLogin = ref(false), isAdmin = ref(false), passInput = ref('');
-            
             const showSecurity = ref(false), newPass = ref('');
-            
             const searchQuery = ref(''), selectedCategory = ref('全部'), activeGame = ref(null);
             
-            const userCategories = ref(['手机模拟器', 'Switch 专区', 'PC 移植', '精品精品']);
-            const games = ref([]);
+            // 背景图 3A 大作 AppID (黑神话, 艾尔登法环, 大镖客2, 赛博朋克, 战神, 蜘蛛侠等)
+            const bgAppIds = [2358720, 1245620, 1174180, 1091500, 1817070, 1817130, 1493710, 1938090];
             
-            // 默认密码，会被云端数据覆盖
+            const userCategories = ref(['手机模拟器', 'Switch 专区', 'PC 移植', '精品资源']);
+            const games = ref([]);
             const adminPassword = ref('8888');
 
             const editItem = ref({ id: '', title: '', category: '手机模拟器', price: 'RM 3', banner: '', youtubeId: '', screenshots: [], specs: { cpu: '', fps: '', device: '' } });
             const screenshotInput = ref(''), editingIndex = ref(-1), newCatName = ref('');
 
+            // 核心功能：提取 YouTube 嵌入链接 (支持 ID 和 完整网址)
+            const getYoutubeEmbedUrl = (input) => {
+                if (!input || input.includes('.mp4')) return null;
+                let id = input;
+                if (input.includes('v=')) id = input.split('v=')[1].split('&')[0];
+                else if (input.includes('youtu.be/')) id = input.split('youtu.be/')[1].split('?')[0];
+                return `https://www.youtube.com/embed/${id}`;
+            };
+
             onMounted(() => {
-                // 监听游戏数据
                 db.ref('games').on('value', (snapshot) => {
                     const data = snapshot.val();
-                    if (data) {
-                        games.value = Object.keys(data).map(key => {
-                            return { ...data[key], id: key };
-                        }).reverse();
-                    } else {
-                        games.value = [];
-                    }
+                    games.value = data ? Object.keys(data).map(k => ({ ...data[k], id: k })).reverse() : [];
                 });
-                
-                // 监听分类数据
                 db.ref('categories').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if(data) userCategories.value = data;
                 });
-
-                // 新增：监听云端密码，实现“改一处全改”
                 db.ref('adminPass').on('value', (snapshot) => {
                     const cloudPass = snapshot.val();
                     if (cloudPass) adminPassword.value = cloudPass;
                 });
             });
+
+            const handleLogin = () => { if (passInput.value === adminPassword.value) { isAdmin.value = true; showLogin.value = false; passInput.value = ''; } else { alert('密码错误'); }};
+            
+            const saveGame = () => {
+                editItem.value.screenshots = screenshotInput.value.split('\n').filter(s => s.trim());
+                const gameId = editItem.value.id || ('game_' + Date.now());
+                editItem.value.id = gameId;
+                db.ref('games/' + gameId).set(editItem.value).then(() => {
+                    editItem.value = { id: '', title: '', category: userCategories.value[0], price: 'RM 3', banner: '', youtubeId: '', screenshots: [], specs: { cpu: '', fps: '', device: '' } };
+                    screenshotInput.value = ''; editingIndex.value = -1; alert('同步成功');
+                });
+            };
 
             const addCategory = () => {
                 if(newCatName.value.trim() && !userCategories.value.includes(newCatName.value)) {
@@ -261,52 +296,31 @@
                     newCatName.value = '';
                 }
             };
+
             const removeCategory = (idx) => {
-                if(confirm('确定要删除这个分类吗？（注意：不会删除该分类下的游戏）')) {
+                if(confirm('确定删除？')) {
                     userCategories.value.splice(idx, 1);
                     db.ref('categories').set(userCategories.value);
                 }
             };
 
-            const handleLogin = () => { if (passInput.value === adminPassword.value) { isAdmin.value = true; showLogin.value = false; passInput.value = ''; } else { alert('密码错误'); }};
-            
-            // 修改密码：同步到云端
-            const updatePassword = () => { 
-                if(newPass.value) { 
-                    db.ref('adminPass').set(newPass.value).then(() => {
-                        alert('密码已同步至云端！所有设备将立即更新。'); 
-                        showSecurity.value = false; 
-                        newPass.value = '';
-                    }).catch(e => alert('同步失败：' + e.message));
-                } 
-            };
-            
-            const saveGame = () => {
-                editItem.value.screenshots = screenshotInput.value.split('\n').filter(s => s.trim());
-                const gameId = editItem.value.id || ('game_' + Date.now()); 
-                editItem.value.id = gameId; 
-                
-                db.ref('games/' + gameId).set(editItem.value).then(() => {
-                    editItem.value = { id: '', title: '', category: userCategories.value[0], price: 'RM 3', banner: '', youtubeId: '', screenshots: [], specs: { cpu: '', fps: '', device: '' } };
-                    screenshotInput.value = ''; editingIndex.value = -1; alert('云端同步成功');
-                });
+            const editGame = (i) => {
+                editItem.value = JSON.parse(JSON.stringify(games.value[i]));
+                screenshotInput.value = (editItem.value.screenshots || []).join('\n');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
-            const editGame = (i) => { 
-                editItem.value = JSON.parse(JSON.stringify(games.value[i])); 
-                screenshotInput.value = (editItem.value.screenshots || []).join('\n'); 
-                editingIndex.value = i; 
-                window.scrollTo({ top: 0, behavior: 'smooth' }); 
-            };
-
-            const deleteGame = (i) => { 
-                if(confirm('确定从云端永久删除这个游戏吗？')) {
-                    const gameId = games.value[i].id;
-                    db.ref('games/' + gameId).remove();
-                } 
+            const deleteGame = (i) => {
+                if(confirm('永久删除？')) db.ref('games/' + games.value[i].id).remove();
             };
 
             const filteredGames = computed(() => games.value.filter(g => (selectedCategory.value === '全部' || g.category === selectedCategory.value) && g.title.toLowerCase().includes(searchQuery.value.toLowerCase())));
+
+            const updatePassword = () => {
+                if(newPass.value) db.ref('adminPass').set(newPass.value).then(() => {
+                    alert('修改成功'); showSecurity.value = false; newPass.value = '';
+                });
+            };
 
             watch(lang, (n) => localStorage.setItem('dealer_lang_v12', n));
 
@@ -316,7 +330,8 @@
                 searchQuery, selectedCategory, userCategories, games, filteredGames, activeGame, 
                 openGame: (g) => activeGame.value = g, 
                 editItem, screenshotInput, saveGame, editGame, deleteGame,
-                newCatName, addCategory, removeCategory
+                newCatName, addCategory, removeCategory,
+                bgAppIds, getYoutubeEmbedUrl
             };
         }
     }).mount('#app');
