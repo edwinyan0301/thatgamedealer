@@ -27,24 +27,24 @@
 <body class="no-scrollbar">
 
 <div id="app" v-cloak>
-    <nav class="fixed top-0 w-full z-[100] px-4 md:px-8 py-4 glass-panel flex justify-between items-center">
-        <div class="flex items-center gap-3">
+    <nav class="fixed top-0 w-full z-[100] px-4 md:px-8 py-4 glass-panel flex flex-wrap justify-between items-center gap-y-3">
+        <div class="flex items-center gap-3 order-1">
             <div class="w-2 h-2 bg-[#FF6B00] rounded-full animate-pulse shadow-[0_0_10px_#FF6B00]"></div>
             <span class="font-black text-lg md:text-2xl tracking-tighter italic uppercase whitespace-nowrap">That Game <span class="text-[#FF6B00]">Dealer.</span></span>
         </div>
 
-        <div class="hidden lg:flex flex-1 max-w-md mx-8">
-            <input v-model="searchQuery" type="text" :placeholder="lang === 'zh' ? '搜索游戏...' : 'Search games...'" 
-                   class="w-full bg-white/5 border border-white/10 px-4 py-2 rounded-xl focus:outline-none focus:border-[#FF6B00]/50 text-sm">
-        </div>
-
-        <div class="flex items-center gap-2 md:gap-4">
+        <div class="flex items-center gap-2 md:gap-4 order-2 lg:order-3">
             <div class="flex bg-white/5 p-1 rounded-lg border border-white/10 text-[9px] font-black">
                 <button @click="lang = 'zh'" :class="lang === 'zh' ? 'bg-[#FF6B00] text-black' : 'text-white/40'" class="px-2 py-1 rounded transition-all">中</button>
                 <button @click="lang = 'en'" :class="lang === 'en' ? 'bg-[#FF6B00] text-black' : 'text-white/40'" class="px-2 py-1 rounded transition-all">EN</button>
             </div>
             <a href="https://t.me/thatgamedealer" target="_blank" class="bg-[#FF6B00] text-black px-4 py-2 rounded-xl font-black text-[10px] tracking-widest hover:scale-105 transition-all">TG</a>
             <button @click="showLogin = true" class="opacity-20 p-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-width="2"/></svg></button>
+        </div>
+
+        <div class="flex w-full lg:flex-1 lg:w-auto lg:max-w-md lg:mx-8 order-3 lg:order-2">
+            <input v-model="searchQuery" type="text" :placeholder="lang === 'zh' ? '搜索游戏...' : 'Search games...'" 
+                   class="w-full bg-white/5 border border-white/10 px-4 py-2 rounded-xl focus:outline-none focus:border-[#FF6B00]/50 text-sm">
         </div>
     </nav>
 
@@ -53,7 +53,7 @@
     </div>
     <div class="bg-overlay"></div>
 
-    <div class="relative max-w-7xl mx-auto px-4 md:px-8 pt-28 md:pt-40 pb-20 z-10">
+    <div class="relative max-w-7xl mx-auto px-4 md:px-8 pt-36 md:pt-40 pb-20 z-10">
         <header class="mb-10">
             <div class="flex items-center gap-2 text-[#FF6B00] mb-2 uppercase font-black text-[10px] tracking-[0.2em]">
                 <span class="w-6 h-[1px] bg-[#FF6B00]"></span> {{ lang === 'zh' ? '私人游戏资源库' : 'PRIVATE GAME VAULT' }}
@@ -204,7 +204,6 @@
 </div>
 
 <script>
-    // 1. Firebase 初始化配置
     const firebaseConfig = {
         databaseURL: "https://thatgamedealer1-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
@@ -217,27 +216,22 @@
             const lang = ref(localStorage.getItem('dealer_lang_v12') || 'zh');
             const showLogin = ref(false), isAdmin = ref(false), passInput = ref('');
             
-            // 恢复密码修改状态变量
             const showSecurity = ref(false), newPass = ref('');
             
             const searchQuery = ref(''), selectedCategory = ref('全部'), activeGame = ref(null);
             
-            // 初始化分类和游戏列表
             const userCategories = ref(['手机模拟器', 'Switch 专区', 'PC 移植', '精品精品']);
             const games = ref([]);
             
-            // 恢复原来的密码逻辑（保存在本地）
             const adminPassword = ref(localStorage.getItem('admin_pass_v12') || '8888');
 
             const editItem = ref({ id: '', title: '', category: '手机模拟器', price: 'RM 3', banner: '', youtubeId: '', screenshots: [], specs: { cpu: '', fps: '', device: '' } });
             const screenshotInput = ref(''), editingIndex = ref(-1), newCatName = ref('');
 
-            // 2. 从 Firebase 加载数据
             onMounted(() => {
                 db.ref('games').on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        // 将 Firebase 的对象格式转换为数组，并反转顺序（最新添加的在最前）
                         games.value = Object.keys(data).map(key => {
                             return { ...data[key], id: key };
                         }).reverse();
@@ -252,7 +246,6 @@
                 });
             });
 
-            // 3. 分类逻辑 (同步到 Firebase)
             const addCategory = () => {
                 if(newCatName.value.trim() && !userCategories.value.includes(newCatName.value)) {
                     userCategories.value.push(newCatName.value.trim());
@@ -267,7 +260,6 @@
                 }
             };
 
-            // 恢复的密码功能逻辑
             const handleLogin = () => { if (passInput.value === adminPassword.value) { isAdmin.value = true; showLogin.value = false; passInput.value = ''; } else { alert('密码错误'); }};
             const updatePassword = () => { 
                 if(newPass.value) { 
@@ -275,15 +267,12 @@
                     localStorage.setItem('admin_pass_v12', newPass.value); 
                     alert('密码已更新！请记住新密码。'); 
                     showSecurity.value = false; 
-                    newPass.value = ''; // 清空输入框
+                    newPass.value = '';
                 } 
             };
             
-            // 4. 保存游戏 (同步到 Firebase)
             const saveGame = () => {
                 editItem.value.screenshots = screenshotInput.value.split('\n').filter(s => s.trim());
-                
-                // 使用时间戳作为唯一 ID，保证稳定不覆盖
                 const gameId = editItem.value.id || ('game_' + Date.now()); 
                 editItem.value.id = gameId; 
                 
@@ -313,7 +302,7 @@
 
             return { 
                 lang, showLogin, isAdmin, passInput, handleLogin, 
-                showSecurity, newPass, updatePassword, // 暴露出密码修改相关变量和方法
+                showSecurity, newPass, updatePassword,
                 searchQuery, selectedCategory, userCategories, games, filteredGames, activeGame, 
                 openGame: (g) => activeGame.value = g, 
                 editItem, screenshotInput, saveGame, editGame, deleteGame,
