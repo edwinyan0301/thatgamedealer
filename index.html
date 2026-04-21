@@ -2,165 +2,226 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>那个卖游戏的 | THAT GAME DEALER</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap" rel="stylesheet">
     <style>
         :root { --brand: #FF6B00; }
-        body { background: #000; color: #fff; font-family: 'Inter', "Microsoft YaHei", sans-serif; overflow-x: hidden; width: 100%; }
-        .glass-panel { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        body { background: #000; color: #fff; font-family: 'Inter', "Microsoft YaHei", sans-serif; overflow-x: hidden; }
+        .glass-panel { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 107, 0, 0.3); border-radius: 10px; }
         .game-card { transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .steam-bg-wall { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; display: grid; grid-template-columns: repeat(4, 1fr); md:grid-template-columns: repeat(8, 1fr); gap: 10px; padding: 10px; filter: blur(3px); }
-        .steam-bg-wall img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; opacity: 0.2; }
-        .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,1) 100%); }
+        .game-card:hover { transform: translateY(-10px) scale(1.02); border-color: rgba(255, 107, 0, 0.6); box-shadow: 0 20px 40px rgba(255, 107, 0, 0.2); }
+        .steam-bg-wall { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; padding: 10px; filter: blur(3px); }
+        .steam-bg-wall img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; opacity: 0.3; }
+        .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%); }
         [v-cloak] { display: none; }
     </style>
 </head>
 <body class="no-scrollbar">
 
 <div id="app" v-cloak>
-    <nav class="fixed top-0 w-full z-[100] px-4 md:px-8 py-4 glass-panel flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="w-2 h-2 bg-[#FF6B00] rounded-full animate-pulse shadow-[0_0_10px_#FF6B00]"></div>
-            <span class="font-black text-lg md:text-2xl tracking-tighter italic uppercase whitespace-nowrap">That Game <span class="text-[#FF6B00]">Dealer.</span></span>
-        </div>
-
-        <div class="hidden lg:flex flex-1 max-w-md mx-8">
-            <input v-model="searchQuery" type="text" :placeholder="lang === 'zh' ? '搜索...' : 'Search...'" 
-                   class="w-full bg-white/5 border border-white/10 px-4 py-2 rounded-xl focus:outline-none focus:border-[#FF6B00]/50 text-sm">
-        </div>
-
-        <div class="flex items-center gap-2 md:gap-4">
-            <div class="flex bg-white/5 p-1 rounded-lg border border-white/10 text-[9px] font-black mr-2">
-                <button @click="lang = 'zh'" :class="lang === 'zh' ? 'bg-[#FF6B00] text-black' : 'text-white/40'" class="px-2 py-1 rounded transition-all">中</button>
-                <button @click="lang = 'en'" :class="lang === 'en' ? 'bg-[#FF6B00] text-black' : 'text-white/40'" class="px-2 py-1 rounded transition-all">EN</button>
+    <nav class="fixed top-0 w-full z-[100] px-8 py-5 glass-panel border-b border-white/5 flex justify-between items-center">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4">
+                <div class="w-2.5 h-2.5 bg-[#FF6B00] rounded-full animate-pulse shadow-[0_0_15px_#FF6B00]"></div>
+                <span class="font-black text-2xl tracking-tighter italic uppercase whitespace-nowrap">That Game <span class="text-[#FF6B00]">Dealer.</span></span>
             </div>
-            <a href="https://t.me/thatgamedealer" target="_blank" class="bg-[#FF6B00] text-black px-4 py-2 rounded-xl font-black text-[10px] tracking-widest hover:scale-105 transition-all">
-                TG
-            </a>
-            <button @click="showLogin = true" class="opacity-20 p-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-width="2"/></svg>
+
+            <div class="flex bg-white/5 p-1 rounded-xl border border-white/10 text-[10px] font-black">
+                <button @click="lang = 'zh'" :class="lang === 'zh' ? 'bg-[#FF6B00] text-black' : 'text-white/40'" class="px-3 py-1 rounded-lg transition-all">中文</button>
+                <button @click="lang = 'en'" :class="lang === 'en' ? 'bg-[#FF6B00] text-black' : 'text-white/40'" class="px-3 py-1 rounded-lg transition-all">EN</button>
+            </div>
+        </div>
+
+        <div class="hidden md:flex flex-1 max-w-xl mx-12">
+            <input v-model="searchQuery" type="text" :placeholder="lang === 'zh' ? '搜索硬核资源...' : 'Search resources...'" 
+                   class="w-full bg-black/50 border border-white/10 px-6 py-2.5 rounded-2xl focus:outline-none focus:border-[#FF6B00]/50 transition-all text-sm">
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button @click="showLogin = true" class="opacity-20 hover:opacity-100 transition-opacity p-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <a href="https://t.me/thatgamedealer" target="_blank" class="bg-[#FF6B00] text-black px-6 py-2.5 rounded-2xl font-black text-xs tracking-widest hover:bg-white transition-all">
+                {{ lang === 'zh' ? '联系电报' : 'TELEGRAM' }}
+            </a>
         </div>
     </nav>
 
-    <div class="relative max-w-7xl mx-auto px-4 md:px-8 pt-28 md:pt-40 pb-20">
+    <div class="relative max-w-7xl mx-auto px-8 pt-40 pb-32">
         <div class="steam-bg-wall">
             <img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2358770/capsule_616x353.jpg">
             <img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/capsule_616x353.jpg">
             <img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1245620/capsule_616x353.jpg">
             <img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1174180/capsule_616x353.jpg">
+            <img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1817070/capsule_616x353.jpg">
+            <img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2050650/capsule_616x353.jpg">
+            <img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1196590/capsule_616x353.jpg">
+            <img src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/292030/capsule_616x353.jpg">
         </div>
         <div class="bg-overlay"></div>
 
-        <header class="mb-10 md:mb-16">
-            <div class="flex items-center gap-2 text-[#FF6B00] mb-2 uppercase font-black text-[10px] tracking-[0.2em]">
-                <span class="w-6 h-[1px] bg-[#FF6B00]"></span> {{ lang === 'zh' ? '私人游戏资源库' : 'PRIVATE GAME VAULT' }}
+        <header class="mb-16">
+            <div class="flex items-center gap-2 text-[#FF6B00] mb-4 uppercase font-black text-xs tracking-widest">
+                <span class="w-8 h-[1px] bg-[#FF6B00]"></span> {{ lang === 'zh' ? '私人游戏资源库' : 'PRIVATE GAME VAULT' }}
             </div>
-            <h1 class="text-4xl md:text-8xl font-black leading-tight tracking-tighter italic">
+            <h1 class="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter italic mb-6">
                 {{ lang === 'zh' ? '那个卖游戏的' : 'THAT GAME DEALER' }}<br><span class="text-[#FF6B00]">PRIVATE.</span>
             </h1>
         </header>
 
-        <section class="flex overflow-x-auto gap-3 mb-10 pb-4 no-scrollbar relative z-10">
+        <section class="flex flex-wrap gap-4 mb-16 relative z-10">
             <button @click="selectedCategory = '全部'"
-                 :class="['px-6 py-2.5 rounded-xl font-black text-xs transition-all whitespace-nowrap border', 
-                          selectedCategory === '全部' ? 'bg-white border-white text-black' : 'glass-panel text-white/40 border-white/5']">
+                 :class="['px-8 py-3 rounded-2xl font-black text-sm transition-all border', 
+                          selectedCategory === '全部' ? 'bg-white border-white text-black' : 'glass-panel text-white/40 border-white/5 hover:text-white']">
                 {{ lang === 'zh' ? '全部' : 'ALL' }}
             </button>
             <button v-for="cat in userCategories" :key="cat" @click="selectedCategory = cat"
-                 :class="['px-6 py-2.5 rounded-xl font-black text-xs transition-all whitespace-nowrap border', 
-                          selectedCategory === cat ? 'bg-[#FF6B00] border-[#FF6B00] text-black' : 'glass-panel text-white/40 border-white/5']">
+                 :class="['px-8 py-3 rounded-2xl font-black text-sm transition-all border', 
+                          selectedCategory === cat ? 'bg-[#FF6B00] border-[#FF6B00] text-black shadow-lg shadow-[#FF6B00]/20' : 'glass-panel text-white/40 border-white/5 hover:text-white']">
                 {{ cat }}
             </button>
         </section>
 
-        <main class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 relative z-10">
-            <div v-for="(game, index) in filteredGames" :key="index" @click="openGame(game)" class="game-card group rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden p-2 md:p-3 cursor-pointer">
-                <div class="aspect-[4/5] rounded-[1rem] md:rounded-[2rem] overflow-hidden mb-3 md:mb-6 relative">
-                    <img :src="game.banner" class="w-full h-full object-cover">
+        <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+            <div v-for="(game, index) in filteredGames" :key="index" @click="openGame(game)" class="game-card group rounded-[2.5rem] overflow-hidden p-3 cursor-pointer">
+                <div class="aspect-[4/5] rounded-[2rem] overflow-hidden mb-6 relative border border-white/5">
+                    <img :src="game.banner" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
                     <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-60"></div>
                 </div>
-                <div class="px-2 pb-2">
-                    <h3 class="font-bold text-sm md:text-xl mb-2 line-clamp-1 text-white/90">{{ game.title }}</h3>
-                    <div class="flex justify-between items-center italic font-black text-lg md:text-2xl text-[#FF6B00]">
+                <div class="px-4 pb-4">
+                    <h3 class="font-bold text-xl mb-4 line-clamp-1 text-white/90">{{ game.title }}</h3>
+                    <div class="flex justify-between items-center italic font-black text-2xl text-[#FF6B00]">
                         <span>{{ game.price }}</span>
-                        <span class="text-[8px] md:text-[10px] text-white/30 uppercase font-normal tracking-tighter">{{ lang === 'zh' ? '查看' : 'VIEW' }}</span>
+                        <span class="text-[10px] text-white/30 uppercase tracking-widest font-normal">{{ lang === 'zh' ? '点击查看' : 'VIEW' }}</span>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div v-if="activeGame" class="fixed inset-0 z-[150] flex items-end md:items-center justify-center p-0 md:p-6 backdrop-blur-md">
-        <div class="absolute inset-0 bg-black/95" @click="activeGame = null"></div>
-        <div class="relative w-full max-w-6xl bg-[#0d0d0d] rounded-t-[2rem] md:rounded-[3rem] border-t md:border border-white/10 overflow-hidden flex flex-col md:flex-row h-[92vh] md:h-[90vh]">
-            <button @click="activeGame = null" class="absolute top-4 right-6 z-[200] text-white/30 text-xl">✕</button>
-            
-            <div class="w-full md:w-3/5 h-1/3 md:h-full overflow-y-auto custom-scrollbar p-4 md:p-8 bg-black/40">
-                <div class="aspect-video w-full rounded-xl md:rounded-[2rem] overflow-hidden bg-black mb-4 md:mb-8 border border-white/5">
-                    <iframe v-if="activeGame.youtubeId && !activeGame.youtubeId.includes('.mp4')" :src="'https://www.youtube.com/embed/' + activeGame.youtubeId" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+    <div v-if="activeGame" class="fixed inset-0 z-[150] flex items-center justify-center p-4 md:p-6 backdrop-blur-md">
+        <div class="absolute inset-0 bg-black/90" @click="activeGame = null"></div>
+        <div class="relative w-full max-w-6xl bg-[#0d0d0d] rounded-[3rem] border border-white/10 overflow-hidden flex flex-col md:flex-row h-[90vh]">
+            <button @click="activeGame = null" class="absolute top-6 right-8 z-[200] text-white/30 hover:text-white text-2xl">✕</button>
+            <div class="md:w-3/5 h-full overflow-y-auto custom-scrollbar p-8 bg-black/40">
+                <div class="aspect-video w-full rounded-[2rem] overflow-hidden bg-black mb-8 border border-white/5 shadow-2xl">
+                    <iframe v-if="activeGame.youtubeId && !activeGame.youtubeId.includes('.mp4')" :src="'https://www.youtube.com/embed/' + activeGame.youtubeId + '?autoplay=1'" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
                     <video v-else-if="activeGame.youtubeId" :src="activeGame.youtubeId" controls autoplay muted loop class="w-full h-full object-cover"></video>
                 </div>
-                <div class="grid grid-cols-1 gap-4">
-                    <img v-for="img in activeGame.screenshots" :src="img" class="w-full rounded-xl md:rounded-[2rem] border border-white/5">
+                <div class="grid grid-cols-1 gap-6 pb-20">
+                    <img v-for="img in activeGame.screenshots" :src="img" class="w-full rounded-[2rem] border border-white/5">
                 </div>
             </div>
-
-            <div class="w-full md:w-2/5 h-2/3 md:h-full flex flex-col">
-                <div class="p-6 md:p-10 flex-1 overflow-y-auto custom-scrollbar">
-                    <div class="mb-6 md:mb-10">
-                        <span class="px-2 py-0.5 bg-[#FF6B00]/10 text-[#FF6B00] text-[9px] font-black rounded uppercase tracking-widest mb-2 inline-block">{{ activeGame.category }}</span>
-                        <h2 class="text-2xl md:text-4xl font-black italic tracking-tighter leading-none">{{ activeGame.title }}</h2>
+            <div class="md:w-2/5 h-full flex flex-col bg-gradient-to-br from-transparent to-white/[0.02]">
+                <div class="p-10 flex-1 overflow-y-auto custom-scrollbar">
+                    <div class="mb-10">
+                        <span class="px-3 py-1 bg-[#FF6B00]/10 text-[#FF6B00] text-[10px] font-black rounded-lg uppercase tracking-widest mb-4 inline-block">{{ activeGame.category }}</span>
+                        <h2 class="text-4xl font-black italic tracking-tighter leading-none">{{ activeGame.title }}</h2>
                     </div>
-                    <div class="space-y-6">
-                        <div class="bg-white/5 rounded-xl p-4 md:p-6 border border-white/5 text-xs md:text-sm leading-relaxed text-white/70">{{ activeGame.specs.cpu }}</div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-white/5 rounded-xl p-4 border border-white/5">
-                                <span class="text-[9px] font-black text-white/20 block mb-1 uppercase">FPS</span>
-                                <span class="text-green-400 font-black italic text-md">{{ activeGame.specs.fps }}</span>
+                    <div class="space-y-8">
+                        <div>
+                            <h4 class="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">
+                                {{ lang === 'zh' ? '系统要求 / Steam 规格' : 'SYSTEM SPECS / REQUIREMENTS' }}
+                            </h4>
+                            <div class="bg-white/5 rounded-2xl p-6 border border-white/5 text-sm leading-relaxed whitespace-pre-line text-white/80">{{ activeGame.specs.cpu }}</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white/5 rounded-2xl p-5 border border-white/5">
+                                <span class="text-[10px] font-black text-white/20 block mb-2">{{ lang === 'zh' ? '模拟器表现' : 'EMU PERFORMANCE' }}</span>
+                                <span class="text-green-400 font-black italic text-lg">{{ activeGame.specs.fps }}</span>
                             </div>
-                            <div class="bg-white/5 rounded-xl p-4 border border-white/5">
-                                <span class="text-[9px] font-black text-white/20 block mb-1 uppercase">{{ lang === 'zh' ? '实测' : 'DEVICE' }}</span>
-                                <span class="font-bold text-white/90 text-[10px]">{{ activeGame.specs.device }}</span>
+                            <div class="bg-white/5 rounded-2xl p-5 border border-white/5">
+                                <span class="text-[10px] font-black text-white/20 block mb-2">{{ lang === 'zh' ? '实测机型' : 'TESTED DEVICE' }}</span>
+                                <span class="font-bold text-white/90 text-sm">{{ activeGame.specs.device }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="p-6 md:p-10 border-t border-white/5 bg-black">
-                    <div class="flex justify-between items-end mb-4 md:mb-6 text-[#FF6B00] font-black italic">
-                        <span class="text-white/20 text-[10px] uppercase">{{ lang === 'zh' ? '售价' : 'PRICE' }}</span>
-                        <span class="text-3xl md:text-5xl tracking-tighter">{{ activeGame.price }}</span>
+                <div class="p-10 border-t border-white/5 bg-black/40">
+                    <div class="flex justify-between items-end mb-6 px-2 text-[#FF6B00] font-black italic">
+                        <span class="text-white/20 text-xs uppercase tracking-widest">{{ lang === 'zh' ? '售价' : 'PRICE' }}</span>
+                        <span class="text-5xl tracking-tighter">{{ activeGame.price }}</span>
                     </div>
-                    <a href="https://t.me/thatgamedealer" target="_blank" class="block w-full bg-[#FF6B00] text-black text-center py-4 rounded-xl font-black text-xs uppercase tracking-widest">
-                        {{ lang === 'zh' ? '立即购买 (TELEGRAM)' : 'BUY NOW' }}
+                    <a href="https://t.me/thatgamedealer" target="_blank" class="block w-full bg-[#FF6B00] text-black text-center py-5 rounded-2xl font-black shadow-2xl transition-all hover:bg-white uppercase tracking-widest text-xs">
+                        {{ lang === 'zh' ? '立即购买 (TELEGRAM)' : 'BUY NOW (TELEGRAM)' }}
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div v-if="isAdmin" class="fixed inset-0 z-[300] bg-[#050505] p-4 md:p-10 overflow-y-auto">
-        <div class="max-w-7xl mx-auto pb-20">
-             <div class="flex flex-col md:flex-row justify-between gap-4 mb-8">
-                <h2 class="text-2xl font-black italic">CONSOLE.</h2>
-                <button @click="isAdmin = false" class="text-xs opacity-50">退出后台</button>
-             </div>
-             <p class="text-white/20 text-xs">管理后台建议在电脑端操作以获得最佳体验。</p>
+    <div v-if="isAdmin" class="fixed inset-0 z-[300] bg-[#050505] p-10 overflow-y-auto no-scrollbar">
+        <div class="max-w-7xl mx-auto pb-32 relative z-[300]">
+            <div class="flex justify-between items-center mb-12 border-b border-white/5 pb-10">
+                <h2 class="text-3xl font-black italic tracking-tighter">控制台 / <span class="text-[#FF6B00]">CONSOLE.</span></h2>
+                <div class="flex gap-4">
+                    <button @click="showSecurity = true" class="bg-blue-500/10 text-blue-400 px-6 py-3 rounded-2xl text-xs font-bold border border-blue-500/20">修改登录密码</button>
+                    <button @click="isAdmin = false" class="bg-white/5 px-8 py-3 rounded-2xl text-xs font-bold hover:bg-white/10 transition-all border border-white/10">退出后台</button>
+                </div>
+            </div>
+            
+            <div class="mb-16">
+                <h3 class="text-white/30 text-[10px] font-black uppercase tracking-widest mb-6">区域管理</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <div v-for="(cat, idx) in userCategories" :key="idx" class="glass-panel p-4 rounded-2xl flex flex-col gap-3">
+                        <input v-model="userCategories[idx]" @change="saveCategories" class="bg-transparent border-b border-white/10 text-sm font-bold focus:border-[#FF6B00] outline-none">
+                        <button @click="deleteCategory(idx)" class="text-[10px] text-red-500/40 hover:text-red-500 font-black self-end">移除</button>
+                    </div>
+                    <button @click="addCategory" class="border-2 border-dashed border-white/5 rounded-2xl p-4 flex items-center justify-center text-white/20 hover:border-[#FF6B00] hover:text-[#FF6B00]">+ 新增区域</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div class="space-y-4 bg-white/5 p-8 rounded-[3rem] border border-white/5 h-fit shadow-2xl">
+                    <h3 class="text-white/30 text-[10px] font-black uppercase tracking-widest mb-4">内容录入</h3>
+                    <input v-model="editItem.title" placeholder="游戏名称" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#FF6B00]">
+                    <div class="grid grid-cols-2 gap-4">
+                        <select v-model="editItem.category" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm outline-none">
+                            <option v-for="c in userCategories" :value="c">{{ c }}</option>
+                        </select>
+                        <input v-model="editItem.price" placeholder="资源价格" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#FF6B00]">
+                    </div>
+                    <textarea v-model="editItem.specs.cpu" placeholder="推荐配置 / Steam 规格说明" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm h-32 no-scrollbar outline-none focus:border-[#FF6B00]"></textarea>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input v-model="editItem.specs.fps" placeholder="模拟器表现" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm outline-none">
+                        <input v-model="editItem.specs.device" placeholder="实测机型" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm outline-none">
+                    </div>
+                    <input v-model="editItem.banner" placeholder="封面链接" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm outline-none">
+                    <textarea v-model="screenshotInput" placeholder="详情展示图 (每行一个链接)" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm h-24 no-scrollbar outline-none"></textarea>
+                    <input v-model="editItem.youtubeId" placeholder="视频 ID 或直链" class="w-full bg-black/40 border border-white/10 p-4 rounded-2xl text-sm outline-none">
+                    <button @click="saveGame" class="w-full bg-[#FF6B00] text-black font-black py-5 rounded-2xl shadow-xl hover:scale-102 transition-all">同步云端</button>
+                    <button v-if="editingIndex > -1" @click="resetEdit" class="w-full text-white/30 text-xs font-bold py-2">取消编辑模式</button>
+                </div>
+                <div class="lg:col-span-2 space-y-6">
+                    <input v-model="adminSearchQuery" type="text" placeholder="快速查找..." class="w-full bg-white/5 border border-white/10 px-8 py-5 rounded-[2rem] outline-none text-sm focus:border-[#FF6B00]">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div v-for="(game, i) in adminFilteredGames" :key="i" class="glass-panel p-6 flex items-center justify-between rounded-[2rem]">
+                            <div class="flex items-center gap-4">
+                                <img :src="game.banner" class="w-10 h-10 object-cover rounded-lg">
+                                <div><p class="font-bold text-sm text-white/80 line-clamp-1">{{ game.title }}</p><p class="text-[10px] text-[#FF6B00] font-black uppercase">{{ game.price }}</p></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="editGame(games.indexOf(game))" class="p-2.5 bg-white/5 hover:bg-white/10 rounded-lg">✎</button>
+                                <button @click="deleteGame(games.indexOf(game))" class="p-2.5 bg-red-500/10 hover:bg-red-500/20 rounded-lg text-red-500">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div v-if="showLogin" class="fixed inset-0 z-[400] bg-black/95 flex items-center justify-center backdrop-blur-xl p-6">
-        <div class="w-full max-w-xs text-center">
-            <h3 class="text-xl font-black italic mb-8 tracking-widest text-[#FF6B00]">VAULT.</h3>
-            <input v-model="passInput" type="password" placeholder="密码" @keyup.enter="handleLogin" class="w-full bg-transparent border-b border-white/20 text-center text-2xl font-black py-4 mb-8 focus:outline-none focus:border-[#FF6B00]">
-            <button @click="handleLogin" class="w-full bg-[#FF6B00] text-black font-black py-4 rounded-xl text-xs uppercase">验证</button>
-            <button @click="showLogin = false" class="mt-4 text-white/20 text-[10px] block w-full">取消</button>
+    <div v-if="showLogin" class="fixed inset-0 z-[400] bg-black/98 flex items-center justify-center backdrop-blur-xl">
+        <div class="w-full max-w-sm text-center px-10">
+            <h3 class="text-3xl font-black italic mb-2 tracking-[0.2em]"><span class="text-[#FF6B00]">VAULT.</span></h3>
+            <input v-model="passInput" type="password" placeholder="••••" @keyup.enter="handleLogin" class="w-full bg-transparent border-b-2 border-white/10 text-center text-5xl font-black py-4 mb-12 focus:outline-none focus:border-[#FF6B00] tracking-widest">
+            <button @click="handleLogin" class="w-full bg-[#FF6B00] text-black font-black py-4 rounded-2xl shadow-xl text-xs uppercase">{{ lang === 'zh' ? '验证授权' : 'AUTHORIZE' }}</button>
         </div>
     </div>
 </div>
@@ -171,16 +232,38 @@
         setup() {
             const lang = ref(localStorage.getItem('dealer_lang_v11') || 'zh');
             const showLogin = ref(false), isAdmin = ref(false), passInput = ref('');
-            const searchQuery = ref(''), selectedCategory = ref('全部'), activeGame = ref(null);
+            const showSecurity = ref(false), newPass = ref(''), confirmPass = ref('');
+            const searchQuery = ref(''), selectedCategory = ref('全部'), activeGame = ref(null), adminSearchQuery = ref('');
             
+            watch(lang, (v) => localStorage.setItem('dealer_lang_v11', v));
+
+            // 数据持久化
             const userCategories = ref(JSON.parse(localStorage.getItem('user_categories_v11')) || ['手机模拟器', 'Switch 专区', 'PC 移植', '精品 Galgame']);
             const games = ref(JSON.parse(localStorage.getItem('dealer_v11_db')) || []);
             const adminPassword = ref(localStorage.getItem('admin_pass_v11') || '8888');
 
-            const handleLogin = () => { if (passInput.value === adminPassword.value) { isAdmin.value = true; showLogin.value = false; passInput.value = ''; } else { alert('DENIED'); passInput.value = ''; }};
-            const filteredGames = computed(() => games.value.filter(g => (selectedCategory.value === '全部' || g.category === selectedCategory.value) && g.title.toLowerCase().includes(searchQuery.value.toLowerCase())));
+            const editItem = ref({ title: '', category: userCategories.value[0], price: 'RM 3', banner: '', youtubeId: '', screenshots: [], specs: { cpu: '', fps: '', device: '' } });
+            const screenshotInput = ref('');
+            const editingIndex = ref(-1);
 
-            return { lang, showLogin, isAdmin, passInput, handleLogin, searchQuery, selectedCategory, userCategories, games, filteredGames, activeGame, openGame: (g) => activeGame.value = g };
+            const handleLogin = () => { if (passInput.value === adminPassword.value) { isAdmin.value = true; showLogin.value = false; passInput.value = ''; } else { alert('DENIED'); passInput.value = ''; }};
+            const saveGame = () => {
+                editItem.value.screenshots = screenshotInput.value.split('\n').filter(s => s.trim());
+                if (editingIndex.value > -1) games.value[editingIndex.value] = JSON.parse(JSON.stringify(editItem.value));
+                else games.value.unshift(JSON.parse(JSON.stringify(editItem.value)));
+                localStorage.setItem('dealer_v11_db', JSON.stringify(games.value)); resetEdit(); alert('同步成功');
+            };
+            const resetEdit = () => { editItem.value = { title: '', category: userCategories.value[0], price: 'RM 3', banner: '', youtubeId: '', screenshots: [], specs: { cpu: '', fps: '', device: '' } }; screenshotInput.value = ''; editingIndex.value = -1; };
+            const editGame = (i) => { editItem.value = JSON.parse(JSON.stringify(games.value[i])); screenshotInput.value = editItem.value.screenshots.join('\n'); editingIndex.value = i; };
+            const deleteGame = (i) => { if(confirm('确认删除？')) { games.value.splice(i, 1); localStorage.setItem('dealer_v11_db', JSON.stringify(games.value)); } };
+            const addCategory = () => { userCategories.value.push('新区域'); saveCategories(); };
+            const deleteCategory = (idx) => { if(confirm('移除？')) { userCategories.value.splice(idx, 1); saveCategories(); } };
+            const saveCategories = () => localStorage.setItem('user_categories_v11', JSON.stringify(userCategories.value));
+
+            const filteredGames = computed(() => games.value.filter(g => (selectedCategory.value === '全部' || g.category === selectedCategory.value) && g.title.toLowerCase().includes(searchQuery.value.toLowerCase())));
+            const adminFilteredGames = computed(() => games.value.filter(g => g.title.toLowerCase().includes(adminSearchQuery.value.toLowerCase())));
+
+            return { lang, showLogin, isAdmin, passInput, handleLogin, showSecurity, newPass, confirmPass, searchQuery, adminSearchQuery, selectedCategory, userCategories, games, filteredGames, adminFilteredGames, activeGame, openGame: (g) => activeGame.value = g, editItem, screenshotInput, saveGame, editGame, deleteGame, resetEdit, editingIndex, addCategory, deleteCategory, saveCategories };
         }
     }).mount('#app');
 </script>
