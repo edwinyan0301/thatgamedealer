@@ -22,11 +22,16 @@
         .steam-bg-wall img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; opacity: 0.2; }
         .bg-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,1) 100%); }
         
-        /* 修复详情页滚动 */
+        /* 详情页滚动条 */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,107,0,0.3); border-radius: 10px; }
         
         [v-cloak] { display: none; }
+
+        /* 移动端详情页滑动优化 */
+        @media (max-width: 768px) {
+            .mobile-full-scroll { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+        }
     </style>
 </head>
 <body class="no-scrollbar">
@@ -94,8 +99,8 @@
         <div class="relative w-full max-w-6xl bg-[#0d0d0d] rounded-t-[2rem] md:rounded-[3rem] border-t md:border border-white/10 flex flex-col md:flex-row h-[92vh] md:h-[85vh] overflow-hidden">
             <button @click="activeGame = null" class="absolute top-4 right-6 z-[200] text-white/30 text-2xl p-2">✕</button>
             
-            <div class="w-full md:w-3/5 h-[45%] md:h-full overflow-y-auto p-4 md:p-8 bg-black/40 custom-scrollbar space-y-4">
-                <div class="aspect-video rounded-xl overflow-hidden border border-white/5 bg-black">
+            <div class="w-full md:w-3/5 h-full overflow-y-auto mobile-full-scroll custom-scrollbar bg-black/40">
+                <div class="aspect-video w-full bg-black">
                     <iframe v-if="getYoutubeEmbedUrl(activeGame.youtubeId)" 
                             :src="getYoutubeEmbedUrl(activeGame.youtubeId)" 
                             class="w-full h-full" 
@@ -106,15 +111,60 @@
                     <video v-else-if="activeGame.youtubeId" :src="activeGame.youtubeId" controls class="w-full h-full object-contain"></video>
                     <div v-else class="w-full h-full flex items-center justify-center text-white/20 text-xs italic">No Preview Video</div>
                 </div>
-                <div class="grid grid-cols-1 gap-4">
+
+                <div class="p-6 md:hidden">
+                    <span class="text-[#FF6B00] text-[9px] font-black uppercase mb-2 inline-block tracking-[0.3em]">{{ activeGame.category }}</span>
+                    <h2 class="text-3xl font-black italic mb-6 leading-none uppercase">{{ activeGame.title }}</h2>
+                    <div class="bg-white/5 rounded-xl p-4 text-xs leading-relaxed text-white/70 mb-6 whitespace-pre-line border border-white/5">{{ activeGame.specs.cpu }}</div>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                            <span class="text-[9px] text-white/20 block font-black uppercase">{{ lang === 'zh' ? '性能表现' : 'Performance' }}</span>
+                            <span class="text-green-400 font-black italic text-xl">{{ activeGame.specs.fps }}</span>
+                        </div>
+                        <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                            <span class="text-[9px] text-white/20 block font-black uppercase">{{ lang === 'zh' ? '实测设备' : 'Tested On' }}</span>
+                            <span class="font-bold text-[11px] block mt-1 uppercase">{{ activeGame.specs.device }}</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mb-8">
+                        <img v-for="(img, imgIdx) in activeGame.screenshots" :key="imgIdx" :src="img" class="w-full rounded-xl border border-white/5 shadow-2xl" loading="lazy">
+                    </div>
+
+                    <div class="user-notice-box text-[10px] text-white/30 space-y-4 leading-relaxed mb-8 pt-6 border-t border-white/5 italic">
+                        <p v-if="lang === 'zh'">
+                            <strong class="text-white/50 not-italic block mb-1">用户须知：</strong>
+                            1. 我们的游戏资源大部分由互联网收集整理，仅供大家参考与学习，但与内容相关的任何知识产权仍归属于游戏开发商本身。<br>
+                            2. 若您需要商业运营或用于其他商业活动，请您购买正版游戏授权并合法使用。<br>
+                            3. 我们所收的费用仅次于我们的整理和测试游戏的费用。
+                        </p>
+                        <p v-else>
+                            <strong class="text-white/50 not-italic block mb-1">User Notice:</strong>
+                            1. Most of our game resources are collected and organized from the Internet for the purpose of learning only. Any intellectual property rights related to the content still belong to the game developers themselves.<br>
+                            2. If you need commercial operations or other commercial activities, please purchase genuine game licenses and use them legally.<br>
+                            3. The fees we charge is only for sorting and testing the games.
+                        </p>
+                    </div>
+
+                    <div class="flex justify-between items-end mb-4 font-black italic text-[#FF6B00]">
+                        <span class="text-[10px] text-white/20 uppercase tracking-widest">{{ lang === 'zh' ? '单价' : 'Price' }}</span>
+                        <span class="text-4xl tracking-tighter">{{ activeGame.price }}</span>
+                    </div>
+                    <a href="https://t.me/thatgamedealer" target="_blank" class="block w-full bg-[#FF6B00] text-black text-center py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em]">
+                        {{ lang === 'zh' ? '立即咨询购买' : 'Order Now' }}
+                    </a>
+                </div>
+
+                <div class="hidden md:block p-8 space-y-4">
                     <img v-for="(img, imgIdx) in activeGame.screenshots" :key="imgIdx" :src="img" class="w-full rounded-xl border border-white/5 shadow-2xl" loading="lazy">
                 </div>
             </div>
 
-            <div class="w-full md:w-2/5 h-[55%] md:h-full flex flex-col p-6 md:p-10 border-t md:border-t-0 md:border-l border-white/5">
+            <div class="hidden md:flex w-2/5 h-full flex-col p-10 border-l border-white/5">
                 <div class="flex-1 overflow-y-auto no-scrollbar">
                     <span class="text-[#FF6B00] text-[9px] font-black uppercase mb-2 inline-block tracking-[0.3em]">{{ activeGame.category }}</span>
-                    <h2 class="text-2xl md:text-5xl font-black italic mb-6 leading-none uppercase">{{ activeGame.title }}</h2>
+                    <h2 class="text-5xl font-black italic mb-6 leading-none uppercase">{{ activeGame.title }}</h2>
                     
                     <div class="bg-white/5 rounded-xl p-4 text-xs leading-relaxed text-white/70 mb-6 whitespace-pre-line border border-white/5">
                         {{ activeGame.specs.cpu }}
@@ -130,12 +180,27 @@
                             <span class="font-bold text-[11px] block mt-1 uppercase">{{ activeGame.specs.device }}</span>
                         </div>
                     </div>
+
+                    <div class="user-notice-box text-[10px] text-white/30 space-y-3 leading-relaxed py-6 border-t border-white/5 italic">
+                        <p v-if="lang === 'zh'">
+                            用户须知：<br>
+                            1. 我们的游戏资源大部分由互联网收集整理，仅供参考学习，知识产权归原开发商所有。<br>
+                            2. 商业用途请支持并购买正版授权。<br>
+                            3. 所收费用仅用于资源整理与测试。
+                        </p>
+                        <p v-else>
+                            User Notice:<br>
+                            1. Resources are collected for learning only; IP belongs to developers.<br>
+                            2. Please purchase genuine licenses for commercial use.<br>
+                            3. Fees are for sorting and testing services only.
+                        </p>
+                    </div>
                 </div>
 
                 <div class="pt-6 border-t border-white/5">
                     <div class="flex justify-between items-end mb-4 font-black italic text-[#FF6B00]">
                         <span class="text-[10px] text-white/20 uppercase tracking-widest">{{ lang === 'zh' ? '单价' : 'Price' }}</span>
-                        <span class="text-4xl md:text-6xl tracking-tighter">{{ activeGame.price }}</span>
+                        <span class="text-6xl tracking-tighter">{{ activeGame.price }}</span>
                     </div>
                     <a href="https://t.me/thatgamedealer" target="_blank" class="block w-full bg-[#FF6B00] text-black text-center py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-[0_10px_20px_rgba(255,107,0,0.2)]">
                         {{ lang === 'zh' ? '立即咨询购买' : 'Order Now' }}
@@ -243,9 +308,7 @@
             const showSecurity = ref(false), newPass = ref('');
             const searchQuery = ref(''), selectedCategory = ref('全部'), activeGame = ref(null);
             
-            // 背景图 3A 大作 AppID (黑神话, 艾尔登法环, 大镖客2, 赛博朋克, 战神, 蜘蛛侠等)
             const bgAppIds = [2358720, 1245620, 1174180, 1091500, 1817070, 1817130, 1493710, 1938090];
-            
             const userCategories = ref(['手机模拟器', 'Switch 专区', 'PC 移植', '精品资源']);
             const games = ref([]);
             const adminPassword = ref('8888');
@@ -253,7 +316,6 @@
             const editItem = ref({ id: '', title: '', category: '手机模拟器', price: 'RM 3', banner: '', youtubeId: '', screenshots: [], specs: { cpu: '', fps: '', device: '' } });
             const screenshotInput = ref(''), editingIndex = ref(-1), newCatName = ref('');
 
-            // 核心功能：提取 YouTube 嵌入链接 (支持 ID 和 完整网址)
             const getYoutubeEmbedUrl = (input) => {
                 if (!input || input.includes('.mp4')) return null;
                 let id = input;
